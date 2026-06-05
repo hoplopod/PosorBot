@@ -29,6 +29,14 @@ async def dick(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     chat = update.effective_chat
 
+    username_raw = user.username.lower() if user.username else ""
+
+    if username_raw == "hoplopod":
+        await update.message.reply_text(
+            "У тебя и так самый большой член, пошёл нахуй от сюда"
+        )
+        return
+
     username = (
         f"@{user.username}"
         if user.username
