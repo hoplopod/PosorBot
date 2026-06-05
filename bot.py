@@ -33,7 +33,7 @@ async def dick(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if username_raw == "hoplopod":
         await update.message.reply_text(
-            "У тебя и так самый большой член, пошёл нахуй от сюда"
+            "{username}, у тебя и так самый большой член, пошёл нахуй от сюда"
         )
         return
 
@@ -127,7 +127,16 @@ async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = "🏆 Топ писюнов чата\n\n"
 
     for i, (username, length) in enumerate(rows, start=1):
-        text += f"{i}. {username} — {length} см\n"
+        if i == 1:
+            medal = "🥇"
+        elif i == 2:
+            medal = "🥈"
+        elif i == 3:
+            medal = "🥉"
+        else:
+            medal = f"{i}."
+
+        text += f"{medal} {username} — {length} см\n"
 
     await update.message.reply_text(text)
 
