@@ -141,11 +141,66 @@ async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text)
 
 
+async def setdicksize(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    chat = update.effective_chat
+
+    if not user.username or user.username.lower() != "hoplopod":
+        await update.message.reply_text("Нет доступа.")
+        return
+
+    if len(context.args) != 2:
+        await update.message.reply_text(
+            "Использование: /setdicksize @username размер"
+        )
+        return
+
+    target_username = context.args[0].replace("@", "")
+
+    try:
+        new_size = int(context.args[1])
+    except ValueError:
+        await update.message.reply_text("Размер должен быть числом.")
+        return
+
+    cursor.execute(
+        """
+        SELECT user_id
+        FROM users
+        WHERE chat_id=? AND username=?
+        """,
+        (chat.id, f"@{target_username}")
+    )
+
+    row = cursor.fetchone()
+
+    if not row:
+        await update.message.reply_text(
+            "Пользователь не найден в базе этого чата."
+        )
+        return
+
+    cursor.execute(
+        """
+        UPDATE users
+        SET length=?
+        WHERE chat_id=? AND username=?
+        """,
+        (new_size, chat.id, f"@{target_username}")
+    )
+
+    db.commit()
+
+    await update.message.reply_text(
+        f"✅ Размер пользователя @{target_username} установлен на {new_size} см"
+    )
+
 def main():
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("dick", dick))
     app.add_handler(CommandHandler("top", top))
+    app.add_handler(CommandHandler("setdicksize", setdicksize))
 
     print("Bot started")
 
