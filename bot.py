@@ -1,6 +1,7 @@
 import sqlite3
 import random
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 import os
@@ -50,7 +51,9 @@ async def dick(update: Update, context: ContextTypes.DEFAULT_TYPE):
     row = cursor.fetchone()
 
     # Получаем текущую дату в формате ГГГГ-ММ-ДД (например, '2026-06-21')
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_str = datetime.now(
+        ZoneInfo("Europe/Moscow")
+    ).strftime("%Y-%m-%d")
 
     if row is None:
         cursor.execute(
