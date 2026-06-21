@@ -1,15 +1,14 @@
 import sqlite3
 import random
-import time
+from datetime import datetime
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 import os
 
 TOKEN = os.getenv("BOT_TOKEN")
 
-COOLDOWN = 24 * 60 * 60  # 24 часа
-
-db = sqlite3.connect("dickbot.db", check_same_thread=False)
+# Подключаемся к базе данных
+db = sqlite3.connect("/data/dickbot.db", check_same_thread=False)
 cursor = db.cursor()
 
 cursor.execute("""
@@ -18,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER,
     username TEXT,
     length INTEGER DEFAULT 0,
-    last_used INTEGER DEFAULT 0,
+    last_used TEXT DEFAULT '0',
     PRIMARY KEY (chat_id, user_id)
 )
 """)
@@ -29,19 +28,20 @@ async def dick(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     chat = update.effective_chat
 
-    username_raw = user.username.lower() if user.username else ""
-
-    if username_raw == "hoplopod":
-        await update.message.reply_text(
-            "{username}, у тебя и так самый большой член, пошёл нахуй от сюда"
-        )
-        return
-
+    # Формируем красивое имя пользователя заранее
     username = (
         f"@{user.username}"
         if user.username
         else user.first_name
     )
+
+    # Проверка на пасхалку/админа (теперь username определен и код не упадет)
+    username_raw = user.username.lower() if user.username else ""
+    if username_raw == "hoplopod":
+        await update.message.reply_text(
+            f"{username}, у тебя и так самый большой член, пошёл нахуй от сюда"
+        )
+        return
 
     cursor.execute(
         "SELECT length, last_used FROM users WHERE chat_id=? AND user_id=?",
@@ -49,29 +49,28 @@ async def dick(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     row = cursor.fetchone()
 
-    now = int(time.time())
+    # Получаем текущую дату в формате ГГГГ-ММ-ДД (например, '2026-06-21')
+    today_str = datetime.now().strftime("%Y-%m-%d")
 
     if row is None:
         cursor.execute(
             """
             INSERT INTO users
             (chat_id, user_id, username, length, last_used)
-            VALUES (?, ?, ?, 0, 0)
+            VALUES (?, ?, ?, 0, '0')
             """,
             (chat.id, user.id, username)
         )
         db.commit()
         length = 0
-        last_used = 0
+        last_used = '0'
     else:
         length, last_used = row
 
-    if now - last_used < COOLDOWN:
-        remaining = COOLDOWN - (now - last_used)
-        hours = remaining // 3600
-
+    # Проверяем, совпадают ли даты. Если совпали — значит сегодня уже играли
+    if str(last_used) == today_str:
         await update.message.reply_text(
-            f"{username}, команду можно использовать через {hours} ч."
+            f"{username}, ты уже играл сегодня! Кулдаун сбросится в полночь. 😉"
         )
         return
 
@@ -83,13 +82,14 @@ async def dick(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     length += value * sign
 
+    # Записываем новую длину и текущую дату как дату последнего использования
     cursor.execute(
         """
         UPDATE users
         SET length=?, last_used=?, username=?
         WHERE chat_id=? AND user_id=?
         """,
-        (length, now, username, chat.id, user.id)
+        (length, today_str, username, chat.id, user.id)
     )
     db.commit()
 
