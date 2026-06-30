@@ -80,7 +80,7 @@ async def dick(update: Update, context: ContextTypes.DEFAULT_TYPE):
     value = random.randint(1, 10)
     sign = random.choices(
         [1, -1],
-        weights=[70, 30]
+        weights=[10, 1]
     )[0]
 
     length += value * sign
