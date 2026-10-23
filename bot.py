@@ -6,7 +6,7 @@ import psycopg2
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import (
     Application, CommandHandler, ContextTypes,
     CallbackQueryHandler, MessageHandler, filters
@@ -410,11 +410,27 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.edit_text(f"Выпало {color_text}!\n😢 Проигрыш... Твой член уменьшился на {bet} см.\nДействие потрачено.")
     conn.close()
 
+# --- ИНИЦИАЛИЗАЦИЯ КОМАНД МЕНЮ ---
+async def post_init(application: Application):
+    await application.bot.set_my_commands([
+        BotCommand("dick", "📏 Изменить размер (1 бонусное в день)"),
+        BotCommand("top", "🏆 Показать топ писюнов чата"),
+        BotCommand("roulette", "🎰 Сыграть в рулетку"),
+        BotCommand("duel", "⚔️ Вызвать на дуэль")
+    ])
+
 def main():
     threading.Thread(target=run_dummy_server, daemon=True).start()
     init_db()
 
-    app = Application.builder().token(TOKEN).connect_timeout(30.0).read_timeout(30.0).build()
+    app = (
+        Application.builder()
+        .token(TOKEN)
+        .connect_timeout(30.0)
+        .read_timeout(30.0)
+        .post_init(post_init)
+        .build()
+    )
 
     app.add_handler(CommandHandler("dick", dick))
     app.add_handler(CommandHandler("top", top))
