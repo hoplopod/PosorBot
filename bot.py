@@ -414,7 +414,7 @@ def main():
     threading.Thread(target=run_dummy_server, daemon=True).start()
     init_db()
 
-    app = Application.builder().token(TOKEN).build()
+    app = Application.builder().token(TOKEN).connect_timeout(30.0).read_timeout(30.0).build()
 
     app.add_handler(CommandHandler("dick", dick))
     app.add_handler(CommandHandler("top", top))
