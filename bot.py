@@ -6,7 +6,10 @@ import psycopg2
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
+from telegram import (
+    Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand,
+    BotCommandScopeAllPrivateChats, BotCommandScopeAllGroupChats
+)
 from telegram.ext import (
     Application, CommandHandler, ContextTypes,
     CallbackQueryHandler, MessageHandler, filters
@@ -410,8 +413,15 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.edit_text(f"Выпало {color_text}!\n😢 Проигрыш... Твой член уменьшился на {bet} см.\nДействие потрачено.")
     conn.close()
 
-# --- ИНИЦИАЛИЗАЦИЯ КОМАНД МЕНЮ ---
+# --- ИНИЦИАЛИЗАЦИЯ И ОЧИСТКА СТАРЫХ КОМАНД ---
 async def post_init(application: Application):
+    try:
+        await application.bot.delete_my_commands(scope=BotCommandScopeAllPrivateChats())
+        await application.bot.delete_my_commands(scope=BotCommandScopeAllGroupChats())
+        await application.bot.delete_my_commands()
+    except Exception as e:
+        print(f"Ошибка очистки скоупов: {e}")
+
     await application.bot.set_my_commands([
         BotCommand("dick", "📏 Изменить размер (1 бонусное в день)"),
         BotCommand("top", "🏆 Показать топ писюнов чата"),
